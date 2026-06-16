@@ -2,6 +2,10 @@
 Laptop Guard — main entry point.
 Run as Administrator for Event Log access.
 """
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 import time
 import datetime
@@ -15,7 +19,7 @@ from guard.otp_manager import generate_otp
 
 def monitor():
     print("=" * 50)
-    print("  🔒 Laptop Guard — Started")
+    print("  [GUARD] Laptop Guard - Started")
     print(f"  Polling every {POLL_INTERVAL}s for failed logins")
     print("  Press Ctrl+C to stop")
     print("=" * 50)
