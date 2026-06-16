@@ -1,162 +1,304 @@
-# 🔒 Laptop Guard
+# Laptop Guard
 
-A lightweight Windows security tool that monitors failed login attempts, captures a webcam photo of the intruder, sends a desktop notification, and emails you an OTP alert — all automatically.
-
----
-
-## ✨ Features
-
-| Feature | Description |
-|---|---|
-| 📸 Intruder Photo | Captures webcam photo on every failed login |
-| 🔔 Desktop Alert | Instant Windows toast notification |
-| 🔑 OTP Code | Time-based OTP (TOTP) sent to your email |
-| 📧 Email Alert | Photo + OTP delivered to your Gmail |
+A Windows intrusion monitoring application that detects failed login attempts, captures webcam evidence, generates time-based OTP codes, sends email alerts, and provides a real-time monitoring dashboard.
 
 ---
 
-## 🗂️ Project Structure
+## Overview
 
+Laptop Guard monitors the Windows Security Event Log for failed authentication events (Event ID 4625).
+
+When a failed login attempt is detected, the application:
+
+* Captures a webcam photo
+* Displays a desktop notification
+* Generates a TOTP verification code
+* Sends an email alert containing the timestamp, OTP, and captured image
+* Stores evidence locally for later review
+
+The project is intended for personal workstation monitoring, security experimentation, and educational cybersecurity projects.
+
+---
+
+## Features
+
+### Event Monitoring
+
+* Monitors Windows Security Event Logs
+* Detects failed login events (Event ID 4625)
+* Configurable polling interval
+
+### Evidence Collection
+
+* Captures images from the default webcam
+* Automatically timestamps captured photos
+* Stores images locally
+
+### Alerting
+
+* Windows desktop notifications
+* Email alerts via Gmail SMTP
+* Attached webcam evidence
+* Time-based OTP generation
+
+### Dashboard
+
+* Live OTP display
+* OTP countdown indicator
+* Intruder photo gallery
+* Full-size image preview
+* Security event history
+* Activity log viewer
+* Service status monitoring
+
+### Configuration
+
+* Environment-variable based configuration
+* Automatic TOTP secret generation
+* Custom photo storage location
+
+---
+
+## Architecture
+
+```text
+Failed Login Attempt
+          │
+          ▼
+Windows Security Log
+(Event ID 4625)
+          │
+          ▼
+Laptop Guard Monitor
+          │
+ ┌────────┼────────┬────────┐
+ ▼        ▼        ▼        ▼
+Photo   Notify    OTP     Email
+Capture User   Generate   Alert
+          │
+          ▼
+   Evidence Storage
+          │
+          ▼
+ Dashboard Update
 ```
+
+---
+
+## Project Structure
+
+```text
 laptop-guard/
-├── main.py               ← Entry point
-├── config.py             ← Loads .env settings
+│
+├── main.py
+├── dashboard.py
+├── config.py
+│
 ├── guard/
-│   ├── camera.py         ← Webcam capture
-│   ├── event_monitor.py  ← Windows Event Log watcher
-│   ├── notifier.py       ← Desktop notifications
-│   ├── mailer.py         ← Gmail alert sender
-│   └── otp_manager.py    ← TOTP generation & verification
-├── .env.example          ← Template — copy to .env
+│   ├── camera.py
+│   ├── event_monitor.py
+│   ├── notifier.py
+│   ├── mailer.py
+│   └── otp_manager.py
+│
+├── .env.example
 ├── requirements.txt
+├── guard.log
 └── README.md
 ```
 
 ---
 
-## ⚙️ Setup
+## Requirements
 
-### 1. Clone the repo
+* Windows 10 or Windows 11
+* Python 3.10+
+* Administrator privileges
+* Webcam
+* Gmail account with App Password enabled
+
+---
+
+## Installation
+
+Clone the repository:
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/laptop-guard.git
+
 cd laptop-guard
 ```
 
-### 2. Install dependencies
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure your `.env`
+Create a configuration file:
 
 ```bash
 copy .env.example .env
 ```
 
-Edit `.env` with your values:
+Edit `.env`:
 
 ```env
 YOUR_EMAIL=you@gmail.com
-APP_PASSWORD=xxxx xxxx xxxx xxxx
-TOTP_SECRET=                      # Leave blank to auto-generate
+APP_PASSWORD=your_app_password
+
+TOTP_SECRET=
+
 SAVE_FOLDER=C:\IntruderPhotos
+
 POLL_INTERVAL=5
 ```
 
-> **Gmail App Password:** Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) → Generate a password for "Mail". Use that instead of your real Gmail password.
+---
 
-### 4. Run as Administrator
+## Gmail Configuration
 
-Right-click PowerShell → **Run as Administrator**, then:
+Laptop Guard uses Gmail SMTP for email delivery.
+
+1. Enable Two-Factor Authentication.
+2. Generate a Gmail App Password.
+3. Add the generated password to the `.env` file.
+
+Do not use your normal Gmail password.
+
+---
+
+## Running the Monitor
+
+Launch an elevated terminal and run:
 
 ```bash
 python main.py
 ```
 
-> Administrator access is required to read the Windows Security Event Log.
+Administrator privileges are required to access the Windows Security Event Log.
 
 ---
 
-## 🚀 Auto-start on Boot (Optional)
+## Running the Dashboard
 
-1. Create a file called `start_guard.bat`:
-   ```bat
-   @echo off
-   pythonw C:\path\to\laptop-guard\main.py
-   ```
-
-2. Press `Win + R` → type `shell:startup` → press Enter
-
-3. Paste `start_guard.bat` into the Startup folder
-
-Laptop Guard will now silently run every time you log in.
-
----
-
-## 🔑 TOTP / Google Authenticator (Optional)
-
-On first run, if `TOTP_SECRET` is blank, the script auto-generates one and prints it:
-
-```
-[*] Generated new TOTP_SECRET: JBSWY3DPEHPK3PXP
-[*] Add this to your .env file and also to Google Authenticator!
+```bash
+python dashboard.py
 ```
 
-You can add this secret to **Google Authenticator** or **Authy** to see live OTP codes on your phone — the same codes the script emails you.
+The dashboard provides:
+
+* Evidence review
+* OTP monitoring
+* Activity logging
+* Service status visibility
 
 ---
 
-## 📸 How It Works
+## OTP Setup
 
-```
-Wrong password entered
-        │
-        ▼
-Windows logs Event ID 4625
-        │
-        ▼
-Laptop Guard detects new failed event
-        │
-        ├──▶ 📸 Webcam photo captured
-        ├──▶ 🔔 Desktop notification shown
-        ├──▶ 🔑 TOTP OTP generated
-        └──▶ 📧 Email sent with photo + OTP
+If no TOTP secret is provided, Laptop Guard automatically generates one on first launch.
+
+Example:
+
+```text
+Generated new TOTP_SECRET: XXXXXXXXXXXXXXXXX
 ```
 
----
+Store this value in your `.env` file and optionally import it into:
 
-## 🛡️ Privacy & Safety
+* Google Authenticator
+* Authy
+* Microsoft Authenticator
 
-- Photos are saved **locally** to `SAVE_FOLDER` and **never uploaded** anywhere except your own email
-- Your `.env` file (with credentials) is **gitignored** and never pushed to GitHub
-- The `TOTP_SECRET` in `.env` is private — do not share it
-
----
-
-## 📦 Dependencies
-
-| Package | Purpose |
-|---|---|
-| `opencv-python` | Webcam capture |
-| `pywin32` | Windows Event Log access |
-| `plyer` | Desktop notifications |
-| `pyotp` | TOTP OTP generation |
-| `python-dotenv` | `.env` config loading |
+Generated codes remain valid for 30 seconds.
 
 ---
 
-## ⚠️ Requirements
+## Evidence Storage
 
-- **Windows 10/11** only (uses Windows Security Event Log)
-- **Python 3.10+**
-- **Must run as Administrator**
-- A working **webcam**
-- A **Gmail account** with App Passwords enabled
+Captured images are stored in:
+
+```text
+C:\IntruderPhotos
+```
+
+File naming format:
+
+```text
+intruder_YYYYMMDD_HHMMSS.jpg
+```
+
+Example:
+
+```text
+intruder_20250120_221530.jpg
+```
 
 ---
 
-## 📄 License
+## Example Alert
 
-MIT License — free to use, modify, and distribute for personal use.
+```text
+FAILED LOGIN ALERT
+
+Time     : 2025-01-20 22:15:30
+OTP Code : 573921
+
+If this login attempt was not initiated by you,
+review the attached image and investigate immediately.
+```
+
+---
+
+## Dependencies
+
+| Package       | Purpose                   |
+| ------------- | ------------------------- |
+| opencv-python | Webcam capture            |
+| pywin32       | Windows Event Log access  |
+| plyer         | Desktop notifications     |
+| pyotp         | TOTP generation           |
+| python-dotenv | Environment configuration |
+| pillow        | Dashboard image rendering |
+
+---
+
+## Limitations
+
+* Windows-only implementation
+* Polling-based event monitoring
+* Gmail SMTP dependency
+* Local storage only
+* No automatic evidence retention policy
+* Single-recipient email configuration
+
+---
+
+## Security Notes
+
+* Never commit `.env` to source control.
+* Do not expose `APP_PASSWORD` or `TOTP_SECRET`.
+* Run only on systems you own or are authorized to monitor.
+* Protect stored evidence appropriately.
+
+---
+
+## Future Improvements
+
+* Telegram notifications
+* Discord integration
+* Face recognition
+* Cloud evidence storage
+* Multi-user support
+* Event subscription monitoring instead of polling
+* Remote dashboard access
+
+---
+
+## License
+
+MIT License
+
+```
+```
